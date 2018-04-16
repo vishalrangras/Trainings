@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:int="http://www.springframework.org/schema/integration"
+	xmlns:int-file= "http://www.springframework.org/schema/integration/file"
+	xmlns:int-stream="http://www.springframework.org/schema/integration/stream"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration.xsd
+		http://www.springframework.org/schema/integration/file http://www.springframework.org/schema/integration/file/spring-integration-file.xsd
+		http://www.springframework.org/schema/integration/stream http://www.springframework.org/schema/integration/stream/spring-integration-stream.xsd
+		">
+
+	<!-- Adapter for reading files -->
+	<int-file:inbound-channel-adapter id="producer-file-adapter"
+		channel="inboundChannel" directory="file:d://si-inbound"
+		prevent-duplicates="true">
+		<int:poller fixed-rate="5000" />
+	</int-file:inbound-channel-adapter>
+	
+	<!-- a direct inbound channel -->
+	<int:channel id="inboundChannel" />
+	
+	<!-- Custom MessageSelector bean declaration -->
+	<bean id="selector" class="com.cd.spring.FileSelector" />
+	
+	<!-- Custom Filter which follows business logic implemented in FileSelector.java -->
+	<!-- Connects inbounChannel with outboundChannel,
+	 and processes the messages as per business logic -->
+	<int:filter input-channel="inboundChannel" output-channel="outboundChannel" discard-channel="discardChannel" ref="selector" />
+	
+
+	<!-- a direct outbound channel -->
+	<int:channel id="outboundChannel" />
+
+	<!-- Adapter for writing files of outbound channel-->
+	<int-file:outbound-channel-adapter
+		channel="outboundChannel" id="consumer-file-adapter" directory="file:d://si-outbound" />
+	
+	<!-- a direct discard channel -->
+	<int:channel id="discardChannel" />
+	
+	<!-- Adapter for writing files of discard channel-->
+	<int-file:outbound-channel-adapter
+		channel="discardChannel" id="discard-file-adapter" directory="file:d://si-discard" />
+	
+	<int:poller id="defaultPoller" default="true"
+		max-messages-per-poll="5" fixed-rate="200" />
+	
+
+</beans>
