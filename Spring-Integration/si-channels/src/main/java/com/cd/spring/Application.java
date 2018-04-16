@@ -13,7 +13,7 @@ import org.springframework.messaging.MessageChannel;
 public class Application {
 
 	public static void main(String[] args) {
-		SpringApplication.run(Application.class, args);
+		//SpringApplication.run(Application.class, args);
 		ConfigurableApplicationContext ctx = new SpringApplication(Application.class).run(args);
 		
 		/*
@@ -35,7 +35,7 @@ public class Application {
 					System.out.println("\n\nStarting " + (++count) + " iteration!");
 					MessageChannel channel = ctx.getBean("messageChannel", MessageChannel.class);
 					Message<String> message1 = MessageBuilder
-							.withPayload("Message " + count + " comming from Message Builder through channel!").build();
+							.withPayload("Message " + count + " comming from Message Builder through PubSub channel!").build();
 					channel.send(message1);
 					try {
 						// System.out.println("Thread is going into sleep...");
@@ -51,7 +51,7 @@ public class Application {
 		
 		/****** Uncomment following t1.start() call to test Subscribable Channel realization ******/
 		
-		// t1.start();
+		//t1.start();
 		
 		
 		/*
@@ -70,11 +70,11 @@ public class Application {
 			
 				MessageChannel channel = ctx.getBean("messageChannel", MessageChannel.class);
 				Message<String> message1 = MessageBuilder
-						.withPayload("\n\nFirst message payload to be published to the channel!").build();
+						.withPayload("\n\nFirst message payload to be published to the Pollable channel!").build();
 				channel.send(message1);
 				System.out.println("First Message Sent...");
 				Message<String> message2 = MessageBuilder
-						.withPayload("Payload of second message to be published to the channel!").build();
+						.withPayload("Payload of second message to be published to the Pollable channel!").build();
 				channel.send(message2);
 				System.out.println("Second Message Sent...");
 				Message<String> message3 = MessageBuilder.withPayload(
@@ -109,7 +109,7 @@ public class Application {
 			public void run() {
 				MessageChannel channel = ctx.getBean("messageChannel", MessageChannel.class);
 				Message<String> message1 = MessageBuilder
-						.withPayload("\n\nSending message to default channel...").setHeader("sender", "Thread 3").build();
+						.withPayload("\n\nSending message to direct channel...").setHeader("sender", "Thread 3").build();
 				channel.send(message1);
 				while(true) {
 					
@@ -119,7 +119,7 @@ public class Application {
 		
 		/****** Uncomment following t3.start() call to test Direct Channel realization ******/
 		
-		t3.start();
+		//t3.start();
 		
 	}
 

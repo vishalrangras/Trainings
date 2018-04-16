@@ -10,8 +10,7 @@
 
 
 	<!-- Inbound Adapters -->
-	<!-- message producer / a Spring Integration wrapped Java Standard input 
-		stream -->
+	<!-- Message producer / a Spring Integration wrapped Java Standard input stream -->
 	<int-stream:stdin-channel-adapter id="producer"
 		channel="messageChannel" />
 	
@@ -30,12 +29,15 @@
 		max-messages-per-poll="5" fixed-rate="200" />
 
 	<!-- Pub - Sub message channel -->
-	<!-- <int:publish-subscribe-channel id="messageChannel" /> -->
+	<int:publish-subscribe-channel id="messageChannel" />
 
 	<!-- Direct channel without the queue, Pollable channel with the queue -->
-	<int:channel id="messageChannel">
-		<!-- Disable the queue capacity below to make this channel a Direct Channel -->
-		<!-- <int:queue capacity="2" /> -->
-	</int:channel>
+	
+	<!-- <int:channel id="messageChannel">
+		
+		Disable the queue capacity below to make this channel a Direct Channel
+		<int:queue capacity="2" />
+	</int:channel> -->
+	
 
 </beans>
