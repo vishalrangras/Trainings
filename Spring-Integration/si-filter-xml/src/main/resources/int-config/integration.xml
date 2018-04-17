@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:int="http://www.springframework.org/schema/integration"
+	xmlns:int-file= "http://www.springframework.org/schema/integration/file"
+	xmlns:int-stream="http://www.springframework.org/schema/integration/stream"
+	xmlns:int-xml="http://www.springframework.org/schema/integration/xml"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration.xsd
+		http://www.springframework.org/schema/integration/file http://www.springframework.org/schema/integration/file/spring-integration-file.xsd
+		http://www.springframework.org/schema/integration/stream http://www.springframework.org/schema/integration/stream/spring-integration-stream.xsd
+		http://www.springframework.org/schema/integration/xml http://www.springframework.org/schema/integration/xml/spring-integration-xml.xsd
+		">
+
+	<!-- Adapter for reading files -->
+	<int-file:inbound-channel-adapter id="producer-file-adapter"
+		channel="inboundChannel" directory="file:d://si-inbound"
+		prevent-duplicates="true">
+		<int:poller fixed-rate="5000" />
+	</int-file:inbound-channel-adapter>
+	
+	<!-- a direct inbound channel -->
+	<int:channel id="inboundChannel" />
+	
+	<!-- File to String Transformer -->
+	<!-- 
+		This transformer converts a SI message with File as its payload to a 
+		SI message with a string as its payload.
+		The String in the resulting message contains the content of the file. 
+	 -->
+	<int-file:file-to-string-transformer id="file-to-string-transformer" 
+		input-channel="inboundChannel" output-channel="xml-inboundChannel" charset="UTF-8" />
+	
+	<!-- a direct inbound channel for reading strings containing XML data provided by file-to-string-transformer -->
+	<int:channel id="xml-inboundChannel" />
+	
+	<!-- SI Xpath Expression Component -->
+	<!-- This component defines the expression that XPath Filter will use for filtration purposes -->
+	<int-xml:xpath-expression id="filterXpathExp" expression="//country='USA'"></int-xml:xpath-expression>
+	
+	<!-- Uncomment following snippet to test Xpath Filter -->
+	<!-- Xpath filter which filters out the messages based on the XPath expression provided -->
+	<!-- <int-xml:xpath-filter id="xpathFilter" input-channel="xml-inboundChannel" match-type="exact" 
+		discard-channel="discardChannel" output-channel="outboundChannel" xpath-expression-ref="filterXpathExp"> </int-xml:xpath-filter> -->
+		
+	<!-- XML Validation Filer, validates the XML against the expected schema -->	
+	<int-xml:validating-filter id="validation-filter" input-channel="xml-inboundChannel" output-channel="outboundChannel" discard-channel="discardChannel" schema-location="shiporder.xsd"> 
+	</int-xml:validating-filter>
+	
+	<!-- a direct outbound channel -->
+	<int:channel id="outboundChannel" />
+
+	<!-- Adapter for writing files of outbound channel-->
+	<int-file:outbound-channel-adapter
+		channel="outboundChannel" id="consumer-file-adapter" directory="file:d://si-outbound" />
+		
+	<!-- a direct discard channel -->
+	<int:channel id="discardChannel" />
+	
+	<!-- Adapter for writing files of discard channel-->
+	<int-file:outbound-channel-adapter
+		channel="discardChannel" id="discard-file-adapter" directory="file:d://si-discard" />
+
+	<int:poller id="defaultPoller" default="true"
+		max-messages-per-poll="5" fixed-rate="200" />
+		
+
+</beans>

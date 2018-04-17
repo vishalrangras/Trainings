@@ -14,7 +14,7 @@
 	<!-- Inbound Adapters -->
 	
 	<!-- Inbound File Adaptor which listens to d://inbound location for any files -->
-	<int-file:inbound-channel-adapter id="producer-file-adapter" channel="messageChannel" directory="file:d://inbound" prevent-duplicates="true"> 
+	<int-file:inbound-channel-adapter id="producer-file-adapter" channel="messageChannel" directory="file:d://si-inbound" prevent-duplicates="true"> 
 		<int:poller fixed-rate="5000" />
 	</int-file:inbound-channel-adapter>
 	
@@ -29,13 +29,11 @@
 	
 	<!-- Outbound Adapters -->
 	
-	<int-file:outbound-channel-adapter channel="messageChannel" id="consumer-file-adapter" directory="file:d://outbound" />
+	<int-file:outbound-channel-adapter channel="messageChannel" id="consumer-file-adapter" directory="file:d://si-outbound" />
 
 	<!-- Direct channel without the queue, Pollable channel with the queue -->
 	
 	<int:channel id="messageChannel">
-		<!-- Disable the queue capacity below to make this channel a Direct Channel -->
-		<int:queue capacity="2" />
 	</int:channel>
 	
 
