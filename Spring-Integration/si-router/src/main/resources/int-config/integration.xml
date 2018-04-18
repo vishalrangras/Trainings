@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:int="http://www.springframework.org/schema/integration"
+	xmlns:int-file= "http://www.springframework.org/schema/integration/file"
+	xmlns:int-stream="http://www.springframework.org/schema/integration/stream"
+	xmlns:int-xml="http://www.springframework.org/schema/integration/xml"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration.xsd
+		http://www.springframework.org/schema/integration/file http://www.springframework.org/schema/integration/file/spring-integration-file.xsd
+		http://www.springframework.org/schema/integration/stream http://www.springframework.org/schema/integration/stream/spring-integration-stream.xsd
+		http://www.springframework.org/schema/integration/xml http://www.springframework.org/schema/integration/xml/spring-integration-xml.xsd
+		">
+
+	<!-- Adapter for reading files -->
+	<int-file:inbound-channel-adapter id="producer-file-adapter"
+		channel="inboundChannel" directory="file:d://si-inbound"
+		prevent-duplicates="true">
+		<int:poller fixed-rate="5000" />
+	</int-file:inbound-channel-adapter>
+	
+	<!-- a direct inbound channel -->
+	<int:channel id="inboundChannel" />
+	
+	<!-- File to String Transformer -->
+	<!-- 
+		This transformer converts a SI message with File as its payload to a 
+		SI message with a string as its payload.
+		The String in the resulting message contains the content of the file. 
+	 -->
+	<int-file:file-to-string-transformer id="file-to-string-transformer" 
+		input-channel="inboundChannel" output-channel="xml-inboundChannel" charset="UTF-8" />
+	
+	<!-- a direct inbound channel for reading strings containing XML data provided by file-to-string-transformer -->
+	<int:channel id="xml-inboundChannel" />
+	
+	
+	<int:channel id="norwayChannel" />
+	
+	<int:channel id="norwayFileChannel" /> 
+	<int:channel id="norwaySAChannel" />
+	
+	<int:channel id="usaChannel" />
+	
+	
+	
+	<!-- SI Xpath Router Component -->
+	<!-- This component uses some part of the content of the message 
+		 to route the message through its intended path in the system. -->
+	<int-xml:xpath-router id="orderTypeRouter" input-channel="xml-inboundChannel"> 
+		<int-xml:xpath-expression expression="/shiporder/shipto/country" /> 
+		<int-xml:mapping value="Norway" channel="norwayChannel" /> 
+		<int-xml:mapping value="USA" channel="usaChannel" /> 
+	</int-xml:xpath-router>
+	
+	
+	
+	<!-- Recipient list routers are meant to disburse received messages 
+		to all of its outbound channels without regard for message header or payload content. -->
+	<int:recipient-list-router input-channel="norwayChannel"> 
+		<int:recipient channel="norwayFileChannel" /> 
+		<int:recipient channel="norwaySAChannel" /> 
+	</int:recipient-list-router>
+	
+	<int-file:outbound-channel-adapter channel="norwayFileChannel" id="consumer-file-adapter1" directory="file:d://si-outboundNorway" />
+	
+	<bean id="serviceActivator" class="com.cd.spring.ExampleServiceActivator" />
+	<int:service-activator id="printing-service-activator" input-channel="norwaySAChannel" ref="serviceActivator" /> 
+	
+	<int-file:outbound-channel-adapter channel="usaChannel" id="consumer-file-adapter2" directory="file:d://si-outboundUsa" />
+		
+		
+
+</beans>
