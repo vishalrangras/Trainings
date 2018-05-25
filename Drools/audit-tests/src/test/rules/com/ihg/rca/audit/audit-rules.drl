@@ -1,0 +1,100 @@
+package com.ihg.rca.audit;
+
+import com.ihg.rca.model.DailyHotelPerf;
+import com.ihg.rca.model.Thresholds;
+import com.ihg.rca.model.MonthlyHotelPerf;
+import com.ihg.rca.model.HotelData;
+import com.ihg.rca.model.MonthlyHtlRateCtgyPerf;
+
+
+
+rule "ADR Exception"
+	when
+		$thres : Thresholds($adrMatMin:adrMatMin, $adrMatMax: adrMatMax)
+		$monthHtlPerf : MonthlyHotelPerf($monthId:id)
+		$dyHtlPerf : DailyHotelPerf(monthId == $monthId, adrVarPct <= $adrMatMin || adrVarPct >= $adrMatMax)
+	then
+		System.out.println("ADR Status 	     :   Failed");
+		System.out.println("  id       	     :   "+$dyHtlPerf.getId());
+		System.out.println("  Daily AdrVarPct    :   "+$dyHtlPerf.getAdrVarPct());
+		System.out.println("  Daily AdrUsdAmt    :   "+$dyHtlPerf.getAdrUsdAmt());
+		System.out.println("  Monthly AdrUsdAmt  :   "+$monthHtlPerf.getAdrUsdAmt()+"\n");
+end
+
+rule "ADR Passed"
+	when
+		$thres : Thresholds($adrMatMin:adrMatMin, $adrMatMax: adrMatMax)
+		$monthHtlPerf : MonthlyHotelPerf($monthId:id)
+		$dyHtlPerf : DailyHotelPerf(monthId == $monthId, adrVarPct >= $adrMatMin && adrVarPct <= $adrMatMax)
+	then
+		System.out.println("ADR Status 	     :   Passed");
+		System.out.println("  id       	     :   "+$dyHtlPerf.getId());
+		System.out.println("  Daily AdrVarPct    :   "+$dyHtlPerf.getAdrVarPct());
+		System.out.println("  Daily AdrUsdAmt    :   "+$dyHtlPerf.getAdrUsdAmt());
+		System.out.println("  Monthly AdrUsdAmt  :   "+$monthHtlPerf.getAdrUsdAmt()+"\n");
+end
+
+
+rule "ADR Test"
+	when
+		$thres : Thresholds()
+		$hotelData : HotelData(dailyHotelPerf.adrVarPct < $thres.adrMatMin || dailyHotelPerf.adrVarPct > $thres.adrMatMax)
+	then
+		$hotelData.setTotalExceptions($hotelData.getTotalExceptions()+1);
+		System.out.println("ADR Exception");
+end
+
+rule "FIS to Peoplesoft Test"
+	when
+		$thres : Thresholds()
+		$hotelData : HotelData((monthlyHotelPerf.roomRevVarPct < $thres.fisPsMatMin || monthlyHotelPerf.roomRevVarPct > $thres.fisPsMatMax) 
+		&& (monthlyHotelPerf.roomRevDiffUsdAmt < $thres.fisPsUsdMin || monthlyHotelPerf.roomRevDiffUsdAmt > $thres.fisPsUsdMax))
+	then
+		$hotelData.setTotalExceptions($hotelData.getTotalExceptions()+1);
+		System.out.println("FIS to Peoplesoft Exception");
+end
+
+rule "Comp Set Test"
+	when
+		$thres : Thresholds()
+		$hotelData : HotelData(monthlyHotelPerf.strCompRevparVarPct < $thres.compMatMin || monthlyHotelPerf.strCompRevparVarPct > $thres.compMatMax)
+	then
+		$hotelData.setTotalExceptions($hotelData.getTotalExceptions()+1);
+		System.out.println("Comp Set Exception");
+end
+
+rule "STAR to FIS Test"
+	when
+		$thres : Thresholds()
+		$hotelData : HotelData(monthlyHotelPerf.strHtlRevparVarPct < $thres.strFisMatMin || monthlyHotelPerf.strHtlRevparVarPct > $thres.strFisMatMax)
+	then
+		$hotelData.setTotalExceptions($hotelData.getTotalExceptions()+1);
+		System.out.println("STAR to FIS Exception");
+end
+
+rule "FIS REV ADJ Test"
+	when
+		$thres : Thresholds()
+		$hotelData : HotelData(dailyHotelPerf.adjRevPct < $thres.fisRevAdjMatMin)
+	then
+		$hotelData.setTotalExceptions($hotelData.getTotalExceptions()+1);
+		System.out.println("FIS REV ADJ Exception");
+end
+
+rule "IVANI Test"
+	when
+		$thres : Thresholds()
+		$hotelData : HotelData(monthlyHtlRateCtgyPerf.rateCtgyCode == "IVANI")
+	then
+		$hotelData.setTotalExceptions($hotelData.getTotalExceptions()+1);
+		System.out.println("IVANI Exception");
+end
+
+rule "IVCFN Test"
+	when
+		$thres : Thresholds()
+		$hotelData : HotelData(monthlyHtlRateCtgyPerf.rateCtgyCode == "IVCFN")
+	then
+		$hotelData.setTotalExceptions($hotelData.getTotalExceptions()+1);
+		System.out.println("IVCFN Exception");
+end
